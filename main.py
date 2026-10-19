@@ -1,43 +1,58 @@
-<!DOCTYPE html>
-<html lang="bn">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Video Hub Mini App</title>
-    <!-- টেলিগ্রাম Web App এর অফিশিয়াল স্ক্রিপ্ট -->
-    <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <!-- আপনার অ্যাড নেটওয়ার্কের স্ক্রিপ্ট (যেমন Monetag / Adsterra) এখানে বসাবেন -->
-    <script src="YOUR_AD_SCRIPT_HERE"></script>
-    <style>
-        body { font-family: Arial, sans-serif; background: #0f172a; color: #fff; padding: 15px; text-align: center; margin: 0; }
-        .video-card { background: #1e293b; padding: 15px; margin: 10px 0; border-radius: 10px; display: flex; justify-content: space-between; align-items: center; border: 1px solid #334155; }
-        .watch-btn { background: #3b82f6; color: white; padding: 10px 15px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; }
-        .watch-btn:active { background: #2563eb; }
-    </style>
-</head>
-<body>
-    <h2>🎬 Video Hub</h2>
-    <p>পছন্দের ভিডিওতে ক্লিক করে চ্যাটে আনুন:</p>
+import os
+import logging
+from telegram import Update
+from telegram.ext import (
+    Application,
+    CommandHandler,
+    MessageHandler,
+    ContextTypes,
+    filters,
+)
 
-    <!-- ভিডিও লিস্ট -->
-    <div class="video-card">
-        <span>⭐ Premium Video</span>
-        <button class="watch-btn" onclick="requestVideo('vid_1')">Watch</button>
-    </div>
-    <div class="video-card">
-        <span>🌍 English Video</span>
-        <button class="watch-btn" onclick="requestVideo('vid_2')">Watch</button>
-    </div>
+TOKEN = os.environ.get("8571063350:AAFqB3pDPxcS3_UJSSjKBAIeSYDAokEWkmo")
+OWNER_ID = int(os.environ.get("OWNER_ID", "8945771818"))
 
-    <script>
-        const tg = window.Telegram.WebApp;
-        tg.expand(); // অ্যাপটি ফুল স্ক্রিন করবে
+logging.basicConfig(level=logging.INFO)
 
-        function requestVideo(videoId) {
-            // অ্যাড শো হওয়ার পর পাইথন বটের কাছে ডেটা পাঠিয়ে মিনি অ্যাপ বন্ধ করে দেবে
-            alert('বিজ্ঞাপন শেষ হলে ভিডিওটি আপনার টেলিগ্রাম চ্যাটে পাঠানো হবে!');
-            tg.sendData(videoId); 
-        }
-    </script>
-</body>
-</html>
+
+async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    await update.message.reply_text(
+        "🎬 Welcome to Bangla Hub Video Vault!\n\n"
+        "Send me a video to create a private video link."
+    )
+
+
+async def receive_video(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    user = update.effective_user
+    message = update.effective_message
+
+    if not user or user.id != OWNER_ID:
+        await message.reply_text("⛔ Only the bot owner can upload videos.")
+        return
+
+    video = message.video
+    if not video:
+        return
+
+    await message.reply_text(
+        "✅ Video received!\n"
+        f"File ID: {video.file_id}\n"
+        "Next step: connect secure video storage and link generation."
+    )
+
+
+def main():
+    if not TOKEN or OWNER_ID == 0:
+        raise RuntimeError("Set BOT_TOKEN and OWNER_ID first.")
+
+    app = Application.builder().token(TOKEN).build()
+    app.add_handler(CommandHandler("start", start))
+    app.add_handler(
+        MessageHandler(filters.VIDEO, receive_video)
+    )
+    app.run_polling()
+
+
+if __name__ == "__main__":
+    main()
+    
