@@ -1,9 +1,9 @@
 import os
 import telebot
 
-# Render থেকে টোকেন ও ওনার আইডি নেওয়া
-TOKEN = os.getenv("BOT_TOKEN")
-OWNER_ID = int(os.getenv("OWNER_ID", "8945771818"))
+# সরাসরি আপনার টোকেন ও ওনার আইডি এখানে বসানো হলো
+TOKEN = "8571063350:AAH95ipjXuplUW7AZGk1B-1iL85I1bVDrqY"
+OWNER_ID = 8945771818
 
 bot = telebot.TeleBot(TOKEN)
 
@@ -28,3 +28,4 @@ def video_handler(message):
 if __name__ == "__main__":
     print("বট সফলভাবে চালু হচ্ছে...")
     bot.infinity_polling()
+    
