@@ -1,58 +1,47 @@
-import os
+import asyncio
 import logging
-from telegram import Update
-from telegram.ext import (
-    Application,
-    CommandHandler,
-    MessageHandler,
-    ContextTypes,
-    filters,
-)
+import os
+from aiogram import Bot, Dispatcher, F, types
+from aiogram.filters import Command
 
-TOKEN = os.environ.get("8571063350:AAFqB3pDPxcS3_UJSSjKBAIeSYDAokEWkmo")
-OWNER_ID = int(os.environ.get("OWNER_ID", "8945771818"))
+# এনভায়রনমেন্ট বা Render থেকে টোকেন ও ওনার আইডি নেওয়ার জন্য
+TOKEN = os.getenv("BOT_TOKEN")
+OWNER_ID = int(os.getenv("OWNER_ID", "8945771818"))
 
 logging.basicConfig(level=logging.INFO)
 
+bot = Bot(token=TOKEN)
+dp = Dispatcher()
 
-async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text(
-        "🎬 Welcome to Bangla Hub Video Vault!\n\n"
-        "Send me a video to create a private video link."
+@dp.message(Command("start"))
+async def start_handler(message: types.Message):
+    user_name = message.from_user.first_name
+    await message.answer(
+        f"হ্যালো {user_name}! 👋\n"
+        "আমাদের ভিডিও বটে আপনাকে স্বাগতম।"
     )
 
-
-async def receive_video(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    user = update.effective_user
-    message = update.effective_message
-
-    if not user or user.id != OWNER_ID:
-        await message.reply_text("⛔ Only the bot owner can upload videos.")
+@dp.message(F.video)
+async def video_handler(message: types.Message):
+    # শুধু নির্দিষ্ট ওনার আইডি চেক করার সিকিউরিটি
+    if message.from_user.id != OWNER_ID:
+        await message.reply("⛔ দুঃখিত, শুধুমাত্র বট ওনার এই বটে ভিডিও আপলোড করতে পারবেন।")
         return
 
-    video = message.video
-    if not video:
-        return
-
-    await message.reply_text(
-        "✅ Video received!\n"
-        f"File ID: {video.file_id}\n"
-        "Next step: connect secure video storage and link generation."
+    file_id = message.video.file_id
+    await message.reply(
+        "✅ আপনার ভিডিওটি সফলভাবে টেলিগ্রাম সার্ভারে জমা হয়েছে!\n\n"
+        f"📌 **File ID:**\n`{file_id}`",
+        parse_mode="Markdown"
     )
 
-
-def main():
-    if not TOKEN or OWNER_ID == 0:
-        raise RuntimeError("Set BOT_TOKEN and OWNER_ID first.")
-
-    app = Application.builder().token(TOKEN).build()
-    app.add_handler(CommandHandler("start", start))
-    app.add_handler(
-        MessageHandler(filters.VIDEO, receive_video)
-    )
-    app.run_polling()
-
+async def main():
+    print("বট সফলভাবে চালু হচ্ছে...")
+    await dp.start_polling(bot)
 
 if __name__ == "__main__":
-    main()
-    
+    try:
+        asyncio.run(main())
+    except KeyboardInterrupt:
+        print("বট বন্ধ করা হয়েছে।")
+        
